@@ -4,8 +4,10 @@ dotenv.config();
 
 
 ConnectDB()
-.then(resolve =>{
-    
+.then(() =>{
+    app.listen(process.env.PORT || 5000, ()=>{
+        console.log('Server is Listening ')
+    })
 })
 .catch(err=>{
     console.log('Error', err);
