@@ -1,0 +1,37 @@
+import dotenv from "dotenv";
+import ConnectDB from "./db/index1.js";
+dotenv.config();
+
+
+ConnectDB()
+.then(resolve =>{
+    
+})
+.catch(err=>{
+    console.log('Error', err);
+})
+
+
+
+
+// import mongoose from "mongoose";
+// import { DB_NAME } from "./constant.js";
+// import express from "express";
+// const app = express();
+// ;(async()=>{
+//     try {
+//         await mongoose.connect(`${process.env.MONGO_URL}/${DB_NAME}`);
+//         app.on("error", (error)=>{
+//             console.log("ERROR",error);
+//             throw error;
+//         })
+
+//         app.listen(process.env.PORT, ()=>{
+//             console.log('LISTENING');
+//         })
+//     } catch (error) {
+//         console.error("ERROR", error);
+//         throw error;
+//     }
+// })()
+
