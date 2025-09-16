@@ -18,4 +18,5 @@ return response;
         fs.unlinkSync(filePath);
         return null;
     }
-}
+};
+export {uploadCloud};
