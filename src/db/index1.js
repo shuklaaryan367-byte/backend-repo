@@ -1,9 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config();
 import mongoose from 'mongoose';
 
 import { DB_NAME } from '../constant.js';
 import checkErr from '../app.js';
 
-
+console.log(process.env.MONGO_URL);
 
 const ConnectDB = async()=>{
     try {

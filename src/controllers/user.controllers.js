@@ -11,20 +11,28 @@ const registerUser = asyncPromise( async(req,res)=>{
         throw new ApiErr(400, "All Fields are Required.");
    }
 
-   const existedUser = User.findOne({
+   const existedUser = await User.findOne({
     $or:[{email},{userName}]
-   })
+   });
    if(existedUser){
     throw new ApiErr(409, "User already exists.");
    }
 
    const avatarPath = req.files?.avatar[0]?.path;
-   const coverImagePath = req.files?.coverImage[0]?.path;
+  //  const coverImagePath = req.files?.coverImage?.path;
+  let coverImagePath;
+  if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length >0){
+    coverImagePath = req.files.coverImage[0].path;
+  }
+
+  //  console.log(req.files);
+  //  console.log(req.body);
 
    if(!avatarPath){
     throw new ApiErr(400, "AvatarPath is Required.");
    }
   const avatar = await uploadCloud(avatarPath);
+  console.log(avatar);
   const coverImage = await uploadCloud(coverImagePath);
 
   if(!avatar){
