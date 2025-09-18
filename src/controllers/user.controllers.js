@@ -3,6 +3,21 @@ import { asyncPromise } from "../utils/asyncPromise.js";
 import { User } from "../models/user.models.js";
 import { uploadCloud } from "../utils/cloudinary.js";
 import { ApiRes } from "../utils/apiRes.js";
+
+const GenerateAccessAndRefreshToken = async(userId)=>{
+  try {
+    const user = await User.findById(userId);
+    const AccessToken = user.generateAccessToken();
+    const RefreshToken = user.generateRefreshToken();
+    user.refreshToken = RefreshToken;
+    await user.save({validateBeforeSave: false});
+    return{AccessToken,RefreshToken};
+  } catch (error) {
+    throw new ApiErr(500, "Something went wrong while password validating");
+  }
+}
+
+
 const registerUser = asyncPromise( async(req,res)=>{
    const {userName, password, email, fullName} = req.body;
    console.log("Email: ", email);
@@ -63,7 +78,61 @@ return res.status(201).json(
 
 
 })
+const loginUsers = asyncPromise(async(req, res)=>{
+  const {userName, email, password} = req.body;
+  if(!userName || !email){
+    throw new ApiErr(400, "Can't work w/o Email or UserName");
+  }
+
+  const user = await User.findOne({
+    $or:[{userName}, {email}]
+});
+
+  if(!user){
+    throw new ApiErr(404, "User doesn't exist.");
+  }
+
+ const isPasswordValid = isPassworCorrect(password);
+
+ if(!isPasswordValid){
+  throw new ApiErr(404, "Check your password, it's wrong");
+ }
+
+ const {accessToken, refreshToken} = await GenerateAccessAndRefreshToken(user._id);
+
+ const loggedUser = User.findById(user._id).select("-password -refreshToken");
+
+ const options = {
+  httpOnly: true,
+  secure: true
+ }
+ return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).json(200, {loggedUser,accessToken,refreshToken}, "User Logged in Succesfully");
+
+ })
+
+ 
+
+const logOut = asyncPromise(async(req,res)=>{
+
+  await User.findByIdAndUpdate(req.user._id, 
+    {$set: {
+      refreshToken: undefined
+    }},
+    {
+      new: true
+    })
+
+  const options = {
+  httpOnly: true,
+  secure: true
+ };
+
+ return res.status(200).cookie("accessToken", options).cookie("refreshToken", options).json(new ApiRes(200, {}, "User logged oot succesfully"));
 
 
 
-export {registerUser};
+  })
+
+
+
+export {registerUser, loginUsers, logOut};
