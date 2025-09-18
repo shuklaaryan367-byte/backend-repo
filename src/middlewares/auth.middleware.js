@@ -1,7 +1,7 @@
-import { ApiErr } from "../utils/apiErr";
-import { asyncPromise } from "../utils/asyncPromise";
+import { ApiErr } from "../utils/apiErr.js";
+import { asyncPromise } from "../utils/asyncPromise.js";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.models";
+import { User } from "../models/user.models.js";
 
 
 export const verifyJWT = asyncPromise(async(req,res,next)=>{

@@ -2,7 +2,7 @@ import { ApiErr } from "../utils/apiErr.js";
 import { asyncPromise } from "../utils/asyncPromise.js";
 import { User } from "../models/user.models.js";
 import { uploadCloud } from "../utils/cloudinary.js";
-import { ApiRes } from "../utils/apiRes.js";
+
 
 const GenerateAccessAndRefreshToken = async(userId)=>{
   try {
@@ -80,7 +80,7 @@ return res.status(201).json(
 })
 const loginUsers = asyncPromise(async(req, res)=>{
   const {userName, email, password} = req.body;
-  if(!userName || !email){
+  if(!(userName || email)){
     throw new ApiErr(400, "Can't work w/o Email or UserName");
   }
 
@@ -92,7 +92,7 @@ const loginUsers = asyncPromise(async(req, res)=>{
     throw new ApiErr(404, "User doesn't exist.");
   }
 
- const isPasswordValid = isPassworCorrect(password);
+ const isPasswordValid = user.isPassworCorrect(password);
 
  if(!isPasswordValid){
   throw new ApiErr(404, "Check your password, it's wrong");
@@ -100,13 +100,16 @@ const loginUsers = asyncPromise(async(req, res)=>{
 
  const {accessToken, refreshToken} = await GenerateAccessAndRefreshToken(user._id);
 
- const loggedUser = User.findById(user._id).select("-password -refreshToken");
+ const loggedUser = await User.findById(user._id).select("-password -refreshToken");
+//  console.log(loggedUser,
+//   typeof loggedUser
+//  )
 
  const options = {
   httpOnly: true,
   secure: true
  }
- return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).json(200, {loggedUser,accessToken,refreshToken}, "User Logged in Succesfully");
+ return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).json({statuscode:200, data:{loggedUser,accessToken,refreshToken}, message:"User Logged in Succesfully"});
 
  })
 
