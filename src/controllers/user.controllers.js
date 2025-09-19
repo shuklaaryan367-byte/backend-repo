@@ -2,16 +2,19 @@ import { ApiErr } from "../utils/apiErr.js";
 import { asyncPromise } from "../utils/asyncPromise.js";
 import { User } from "../models/user.models.js";
 import { uploadCloud } from "../utils/cloudinary.js";
+import {ApiRes} from "../utils/apiRes.js"
 
 
 const GenerateAccessAndRefreshToken = async(userId)=>{
   try {
     const user = await User.findById(userId);
-    const AccessToken = user.generateAccessToken();
-    const RefreshToken = user.generateRefreshToken();
-    user.refreshToken = RefreshToken;
+    // console.log(user);
+    // console.log("this", this);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+    user.refreshToken = refreshToken;
     await user.save({validateBeforeSave: false});
-    return{AccessToken,RefreshToken};
+    return{accessToken,refreshToken};
   } catch (error) {
     throw new ApiErr(500, "Something went wrong while password validating");
   }
@@ -99,6 +102,7 @@ const loginUsers = asyncPromise(async(req, res)=>{
  }
 
  const {accessToken, refreshToken} = await GenerateAccessAndRefreshToken(user._id);
+//  console.log(accessToken,"\n", refreshToken);
 
  const loggedUser = await User.findById(user._id).select("-password -refreshToken");
 //  console.log(loggedUser,
@@ -107,7 +111,8 @@ const loginUsers = asyncPromise(async(req, res)=>{
 
  const options = {
   httpOnly: true,
-  secure: true
+  secure: false,
+  sameSite:"Lax"
  }
  return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).json({statuscode:200, data:{loggedUser,accessToken,refreshToken}, message:"User Logged in Succesfully"});
 
@@ -127,7 +132,8 @@ const logOut = asyncPromise(async(req,res)=>{
 
   const options = {
   httpOnly: true,
-  secure: true
+  secure: false,
+  sameSite:"Lax"
  };
 
  return res.status(200).cookie("accessToken", options).cookie("refreshToken", options).json(new ApiRes(200, {}, "User logged oot succesfully"));
