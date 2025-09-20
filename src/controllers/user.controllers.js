@@ -262,7 +262,69 @@ const updateCoverImage = asyncPromise(async(req,res)=>{
   }},{new:true}).select("-password");
 
   return res.status.json(new ApiRes(200, user, "CoverImage Updated Successfully."));
-})
+});
+
+const getUserChannelProfile = asyncPromise(async(req,res)=>{
+  const {username} = req.params;
+
+  if(!username?.trim()){
+    throw new ApiErr(400, "Username not avialable.");
+  }
+
+  const channel  = await User.aggregate([{
+    $match:{
+      username:username?.toLowerCase()
+    }
+  },{
+    $lookup:{
+      from:"subscriptions",
+      localField:"_id",
+      foreignField:"channel",
+      as:"subscribers"
+    }
+  },{
+    $lookup:{
+      from:"subscriptions",
+      localField:"_id",
+      foreignField:"subscriber",
+      as:"subscribedTo"
+    }
+  },{
+    $addFields:{
+      subscribersCount:{
+        $size: "$subscribers"
+      },
+      subscribedToCount:{
+        $size:"$subscribedTo"
+      },
+      isSubscribed:{
+        $cond:{
+          if:{$in:[req?.user._id, "$subscribers.subscriber"]},
+          then:true,
+          else:false
+        }
+      }
+    }
+  },{
+    $project:{
+      fullName:1,
+      username:1,
+      subscribersCount:1,
+      subscribedToCount:1,
+      email:1,
+      avatar:1,
+      coverImage:1
+    }
+  }])
+
+  if(!channel?.length){
+  throw new ApiErr(404, "Channel Does not Exist.");
+}
+
+return res.status(200).json(new ApiRes(200, channel[0], "Channel Fetched Successfully."));
 
 
-export {registerUser, loginUsers, logOut, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateCoverImage}; 
+});
+
+
+export {registerUser, loginUsers, logOut, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateCoverImage,getUserChannelProfile}; 
