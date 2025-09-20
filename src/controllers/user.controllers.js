@@ -21,7 +21,7 @@ const GenerateAccessAndRefreshToken = async(userId)=>{
   } catch (error) {
     throw new ApiErr(500, "Something went wrong while password validating");
   }
-}
+};
 
 
 const registerUser = asyncPromise( async(req,res)=>{
@@ -83,7 +83,7 @@ return res.status(201).json(
 
 
 
-})
+});
 const loginUsers = asyncPromise(async(req, res)=>{
   const {userName, email, password} = req.body;
   if(!(userName || email)){
@@ -98,7 +98,7 @@ const loginUsers = asyncPromise(async(req, res)=>{
     throw new ApiErr(404, "User doesn't exist.");
   }
 
- const isPasswordValid = user.isPassworCorrect(password);
+ const isPasswordValid = await user.isPassworCorrect(password);
 
  if(!isPasswordValid){
   throw new ApiErr(404, "Check your password, it's wrong");
@@ -119,7 +119,7 @@ const loginUsers = asyncPromise(async(req, res)=>{
  }
  return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).json({statuscode:200, data:{loggedUser,accessToken,refreshToken}, message:"User Logged in Succesfully"});
 
- })
+ });
 
  
 
@@ -143,7 +143,7 @@ const logOut = asyncPromise(async(req,res)=>{
 
 
 
-  })
+  });
 
 const refreshAccessToken = asyncPromise(async(req,res)=>{
   const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
@@ -188,8 +188,81 @@ const refreshAccessToken = asyncPromise(async(req,res)=>{
     throw new ApiErr(401, error?.message || "Catch error...");
   }
 
+});
+
+const changeCurrentPassword = asyncPromise(async(req,res)=>{
+
+  const {oldPassword, newPassword} = req.body;
+
+  const user = await User.findById(req.user?._id);
+
+  const isPassworCorrect = await user.isPassworCorrect(oldPassword);
+
+  if(!isPassworCorrect){
+    throw new ApiErr(400, "Invalid Old Password.");
+  }
+
+  user.password = newPassword;
+  await user.save({validateBeforeSave:false});
+
+  return res.
+  status(200).
+  json(new ApiRes(200, {}, "Password Changed Succesfully."));
+});
+
+const getCurrentUser = asyncPromise(async(req,res)=>{
+  return res.
+  status(200).
+  json(new ApiRes(200,req.user,"Current User Fetched Succesfully."));
+});
+
+const updateAccountDetails = asyncPromise(async(req,res)=>{
+  const {fullName, email} = req.body;
+  if(!fullName || !email){
+    throw new ApiErr(401, "All fields are required.");
+  }
+
+  const user = await User.findByIdAndUpdate(user.req?._id, {
+    $set: {fullName: fullName,
+             email: email}
+  }, {new:true}).select("-password");
+
+  return res.status(200).json(new ApiRes(200, user, "Details Updated Succesfully."));
+});
+
+const updateAvatar = asyncPromise(async(req,res)=>{
+  const avatarPath = req.file?.path;
+
+  if(!avatarPath){
+    throw new ApiErr(500, "Some Error Occured, can't get Avatar.");
+  }
+  const avatar = await uploadCloud(avatarPath);
+  if(!avatar.url){
+    throw new ApiErr(500, "Can't get Avatar URL.")
+  }
+
+  const user = await User.findByIdAndUpdate(req.user?._id, {$set:{avatar: avatar.url}}, {new:true}).select("-password");
+
+  return res.status.json(new ApiRes(200, user, "CoverImage Updated Successfully."));
+});
+
+const updateCoverImage = asyncPromise(async(req,res)=>{
+  const coverImagePath = req.file?.path;
+
+  if(!coverImagePath){
+    throw new ApiErr(400, "Some Error Occured, can't get CoverImage.");
+  }
+  const coverImage = await updateCoverImage(coverImagePath);
+  if(!coverImage.url){
+    throw new ApiErr(400, "Can't get cover image URL.");
+  }
+
+  const user = await User.findByIdAndUpdate(req.user?._id,{$set:{
+    coverImage: coverImage.url
+  }},{new:true}).select("-password");
+
+  return res.status.json(new ApiRes(200, user, "CoverImage Updated Successfully."));
 })
 
 
-
-export {registerUser, loginUsers, logOut, refreshAccessToken};
+export {registerUser, loginUsers, logOut, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateCoverImage}; 
