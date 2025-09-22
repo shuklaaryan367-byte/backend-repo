@@ -6,6 +6,8 @@ import { User } from "../models/user.models.js";
 import { uploadCloud } from "../utils/cloudinary.js";
 import {ApiRes} from "../utils/apiRes.js"
 import { jwt } from "jsonwebtoken";
+import mongoose from "mongoose";
+import { pipeline } from "stream";
 
 
 const GenerateAccessAndRefreshToken = async(userId)=>{
@@ -326,5 +328,42 @@ return res.status(200).json(new ApiRes(200, channel[0], "Channel Fetched Success
 
 });
 
+const getWatchHistory = asyncPromise(async(req,res)=>{
+  const user = await User.aggregate({
+    $match:{
+      _id:mongoose.Types.ObjectId(req.user._id)
+    }
+  },{
+    $lookup:{
+      from:"videos",
+      localField:"watchHistory",
+      foreignField:"_id",
+      as:"watchHistory",
+      pipeline:[
+        {$lookup:{
+          from:"users",
+          localField:"owner",
+          foreignField:"_id",
+          as:"owner",
+          pipeline:[
+            {$project:{
+              userName:1,
+              avatar:1,
+              fullName:1
+            }}
+          ]
+        }},{
+          $addFields:{
+            owner:{
+              $first:"$owner"
+            }
+          }
+        }
+      ]
+    }
+  })
+  return res.status(200).json(new ApiRes(200, user[0].watchHistory, "Watch History fetched Successfully."))
+});
 
-export {registerUser, loginUsers, logOut, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateCoverImage,getUserChannelProfile}; 
+
+export {registerUser, loginUsers, logOut, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateCoverImage,getUserChannelProfile,getWatchHistory}; 
