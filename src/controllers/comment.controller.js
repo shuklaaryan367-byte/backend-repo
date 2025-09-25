@@ -79,4 +79,26 @@ const updateComment = asyncPromise(async(req,res)=>{
     
 
 
+});
+
+const deleteComment = asyncPromise(async(req,res)=>{
+    const {commentId} = req.params;
+    const existingComment = await Comment.findById(commentId);
+    if(!commentId || mongoose.Types.ObjectId.isValid(commentId)){
+        throw new ApiErr(400,"Can't fetch the comment ID.");
+    }
+    if(existingComment.owner.toString()!==req.user._id.toString()){
+        throw new ApiErr(400,"You are not allowed to delete other's comment.");
+    }
+    const deletedComment = await Comment.findByIdAndDelete(commentId);
+
+    if(!deletedComment){
+        throw new "Comment couldn't be deleted."
+    }
+
+    return res.status(200).json(new ApiRes(200, deletedComment, "Comment deleted Succesfully."));
+
+
 })
+
+export {getVideoComments,addComment,updateComment,deleteComment};
