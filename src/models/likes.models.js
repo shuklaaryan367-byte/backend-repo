@@ -1,5 +1,5 @@
 import mongoose,{ Schema} from "mongoose";
-import { type } from "os";
+
 const likeSchema = new Schema({
     id:{
         type:String,
@@ -22,3 +22,4 @@ const likeSchema = new Schema({
         ref:"Tweet"
     }
 },{timestamps:true});
+export const Like = mongoose.model("Like",likeSchema);
