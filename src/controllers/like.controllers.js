@@ -83,3 +83,5 @@ const getLikedVideos = asyncPromise(async(req,res)=>{
     return res.status(200).json(new ApiRes(200, likedVideoDetails, "Successfully fetched liked videos."));
 
 });
+
+export {toggleCommentLike,toggleVideoLike,toggleTweetLike,getLikedVideos};
